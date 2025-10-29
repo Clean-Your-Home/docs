@@ -1,0 +1,278 @@
+openapi: 3.1.0
+info:
+  title: Cleaning Booking API
+  description: API для бронирования уборки с авторизацией и без
+  version: 2.0.0
+  contact:
+    name: Cleaning Company
+    email: support@cleaningcompany.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:9449
+    description: Тестовый сервер
+  - url: https://api.cleaningcompany.com
+    description: Продакшн сервер
+paths:
+  /booking/create:
+    post:
+      tags:
+        - booking
+      summary: Создать бронирование (авторизованный пользователь)
+      description: |
+        Создает бронирование для авторизованного пользователя.
+        Данные пользователя берутся из JWT токена.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthBookingRequest"
+            example:
+              bookingDetails:
+                serviceType: "Поддерживающая уборка"
+                area: 135
+                frequency: "Разовая"
+                noMop: true
+                noVacuum: true
+                hasPet: true
+                additionalServices:
+                  - id: "ironing"
+                    quantity: 1
+                  - id: "laundry"
+                    quantity: 1
+              scheduleInfo:
+                date: "2025-10-30T21:00:00.000Z"
+                timeSlot: "12:00 - 15:00"
+                address: "Шоссе Ярославское, д. 5к2"
+                comment: "Код домофона 123"
+      responses:
+        "201":
+          description: Бронирование успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "400":
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /booking/create-guest:
+    post:
+      tags:
+        - booking
+      summary: Создать бронирование (неавторизованный пользователь)
+      description: Создает бронирование для гостя без регистрации
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestBookingRequest"
+            example:
+              bookingDetails:
+                serviceType: "Генеральная уборка"
+                area: 85
+                frequency: "Разовая"
+                noMop: false
+                noVacuum: false
+                hasPet: false
+                additionalServices:
+                  - id: "balcony"
+                    quantity: 1
+              clientInfo:
+                name: "Алексей"
+                phone: "+713212312"
+                email: "alex@example.com"
+              scheduleInfo:
+                date: "2025-10-25T18:00:00.000Z"
+                timeSlot: "09:00 - 12:00"
+                address: "ул. Ленина, д. 10, кв. 25"
+                comment: "Звонить за 15 минут"
+      responses:
+        "201":
+          description: Бронирование успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "400":
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    AdditionalService:
+      type: object
+      required:
+        - id
+        - quantity
+      properties:
+        id:
+          type: string
+          enum:
+            - ironing
+            - laundry
+            - hourly
+            - balcony
+            - grills
+            - blinds
+            - siding
+            - paint
+          description: Уникальный идентификатор доп. услуги
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество единиц услуги
+
+    BookingDetails:
+      type: object
+      required:
+        - serviceType
+        - area
+        - frequency
+      properties:
+        serviceType:
+          type: string
+          enum:
+            - "Поддерживающая уборка"
+            - "Генеральная уборка"
+            - "После ремонта"
+          description: Тип основной услуги
+        area:
+          type: integer
+          minimum: 1
+          description: Площадь помещения в м²
+        frequency:
+          type: string
+          enum:
+            - "Разовая"
+            - "Еженедельная"
+            - "Ежемесячная"
+          description: Частота уборки
+        noMop:
+          type: boolean
+          default: false
+          description: Без мытья полов шваброй
+        noVacuum:
+          type: boolean
+          default: false
+          description: Без пылесоса
+        hasPet:
+          type: boolean
+          default: false
+          description: Есть животные (дополнительная обработка)
+        additionalServices:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdditionalService"
+          description: Список дополнительных услуг
+
+    ScheduleInfo:
+      type: object
+      required:
+        - date
+        - timeSlot
+        - address
+      properties:
+        date:
+          type: string
+          format: date-time
+          description: Дата и время уборки
+        timeSlot:
+          type: string
+          description: Временной интервал (например, "12:00 - 15:00")
+        address:
+          type: string
+          description: Адрес уборки
+        comment:
+          type: string
+          description: Комментарий для клинера
+          default: ""
+
+    AuthBookingRequest:
+      type: object
+      required:
+        - bookingDetails
+        - scheduleInfo
+      properties:
+        bookingDetails:
+          $ref: "#/components/schemas/BookingDetails"
+        scheduleInfo:
+          $ref: "#/components/schemas/ScheduleInfo"
+
+    GuestBookingRequest:
+      type: object
+      required:
+        - bookingDetails
+        - clientInfo
+        - scheduleInfo
+      properties:
+        bookingDetails:
+          $ref: "#/components/schemas/BookingDetails"
+        clientInfo:
+          type: object
+          required:
+            - name
+            - phone
+          properties:
+            name:
+              type: string
+              description: Имя клиента
+            phone:
+              type: string
+              description: Телефон клиента
+            email:
+              type: string
+              format: email
+              description: Email клиента (опционально)
+        scheduleInfo:
+          $ref: "#/components/schemas/ScheduleInfo"
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID бронирования
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled]
+          description: Статус бронирования
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания бронирования
+        totalPrice:
+          type: number
+          description: Общая стоимость заказа
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Описание ошибки
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
