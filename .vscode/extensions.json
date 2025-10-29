@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "streetsidesoftware.code-spell-checker",
+    "editorconfig.editorconfig",
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "mermaidchart.vscode-mermaid-chart",
+    "streetsidesoftware.code-spell-checker-russian"
+  ]
+}
