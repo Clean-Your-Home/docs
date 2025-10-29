@@ -1,6 +1,6 @@
-*.md linguist-detectable=true
+* text eol=lf
 
-*.md text eol=lf
+*.md linguist-detectable=true
 
 *.png binary
 *.jpg binary
