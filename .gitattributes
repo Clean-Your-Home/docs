@@ -1,6 +1,8 @@
 * text eol=lf
 
 *.md linguist-detectable=true
+*.yml linguist-detectable=true
+*.yaml linguist-detectable=true
 
 *.png binary
 *.jpg binary
